@@ -90,15 +90,19 @@ Supersetis võimalik luua vaated:
 ## 1. Paigalda Python sõltuvused  
 ```bash
 pip3 install -r requirements.txt
+```
 ## 2. ETL andmete genereerimine  
 ```bash
 python3 Lasteaiakohad.py
+```
 ## 3. Andmete laadimine PostgreSQL-i
 ```bash
 python3 etl/load_to_postgres.py
+```
 ## 4. Käivita andmebaas ja superset
 ```bash
 docker compose up -d
+```
 ## 5. Ava superset 
 http://localhost:8088
 
