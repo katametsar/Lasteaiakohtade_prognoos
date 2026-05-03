@@ -1,9 +1,14 @@
 from pathlib import Path
+import os
 import pandas as pd
 from sqlalchemy import create_engine, text
 
 OUTPUT_DIR = Path("Outputs")
-DB_URL = "postgresql+psycopg2://postgres:postgres@localhost:5433/lasteaiakohad"
+
+DB_URL = os.getenv(
+    "DB_URL",
+    "postgresql+psycopg2://postgres:postgres@localhost:5433/lasteaiakohad"
+)
 
 TABLES = {
     "rakvere_rahvastiku_prognoos_2026_2035.csv": "population_forecast",
