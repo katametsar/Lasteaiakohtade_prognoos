@@ -31,6 +31,8 @@ services:
       ADMIN_FIRSTNAME: Admin
       ADMIN_LASTNAME: User
       ADMIN_EMAIL: admin@example.com
+      ##järgmise rea lisasin mina, Miina
+      SUPERSET_FEATURE_ENABLE_DATABASE_DRIVERS: "postgresql"
     ports:
       - "8089:8088"
     volumes:

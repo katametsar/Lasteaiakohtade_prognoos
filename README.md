@@ -75,22 +75,57 @@ NB! Projektis kasutatakse kahte erinevat terminali:
 
 Windows PowerShellis liigu projekti juurkausta ehk kausta, kus asub docker-compose.yml.
 
+### 0. Projekti avamine
+
+1. Ava Visual Studio Code
+
+2. Logi sisse GitHubi (kui ei ole juba sisse logitud)
+
+3. Klooni projekt:
+   - vajuta **"Clone Repository"**
+   - vali projekti repo nimekirjast või kasuta repo URL-i (nt GitHubist kopeeritud link)
+
+   Kui projekt on juba arvutis olemas, vali lihtsalt **"Open Folder"** ja ava see kaust
+  
+4. Ava projekt Dev Containeris:
+   - VS Code pakub tavaliselt automaatselt **"Reopen in Container"**
+   - kui ei paku, vajuta:
+     ```
+     Ctrl + Shift + P → Reopen in Container
+     ```
+
+NB:
+- Dev Container loob valmis keskkonna, kus kõik vajalikud tööriistad on juba paigaldatud
+- Projekti on võimalik käivitada ka ilma Dev Containerita (nt otse oma arvutis), kuid sel juhul võivad olla vajalikud lisaseadistused (Python, pip jne)
 
 ### 1. Paigalda Python sõltuvused
 
 ```bash
 pip install -r requirements.txt
 ```
+NB:
 
+- Kui `pip` ei tööta, kasuta:
+  ```bash
+  python -m pip install -r requirements.txt
+
+  Kui kasutad Dev Containerit, võivad sõltuvused olla juba paigaldatud
 ---
 
-### 2. Käivita PostgreSQL ja Superset
+### 2. Käivita PostgreSQL ja Superset (Dockeriga)
 
 Käivita Docker Compose host-arvuti terminalis, näiteks Windows PowerShellis projekti juurkaustas:
 
 ```powershell
 docker compose up -d
 ```
+NB:
+
+- Esmakordsel käivitamisel võib minna kuni ~30 sekundit, enne kui teenused on valmis
+
+- Kontrollimiseks:
+  ```bash
+  docker ps
 
 Kontrolli, kas teenused töötavad:
 
@@ -100,6 +135,7 @@ docker compose ps
 
 Oodatav tulemus on, et `lasteaiakohad_postgres` ja `lasteaiakohad_superset` on üleval. Host-arvutis kasutab PostgreSQL porti `5433` ja Superset porti `8089`.
 
+  Oota kuni lasteaiakohad_superset container on olekus (healthy)
 ---
 
 ### 3. Käivita ETL pipeline
@@ -114,6 +150,8 @@ See samm:
 * teeb transformatsioonid
 * arvutab prognoosid
 * salvestab CSV failid ja graafikud kausta `Outputs/`
+
+Skripti lõpuni töötamiseks peab lahti hüpanud aknad graafikutega sulgema.
 
 ---
 
@@ -143,6 +181,8 @@ Brauseris:
 http://localhost:8089
 ```
 
+NB:
+- Mõnes konfiguratsioonis jookseb Superset pordil **8089**, sel juhul kasuta: http://localhost:8089/
 **Login:**
 
 * kasutaja: `admin`
@@ -190,6 +230,21 @@ ORDER BY table_name;
 ```
 
 ---
+* Superseti sees on host `postgres`
+* Kui ühendud otse arvutist (nt DBeaver vms), kasuta porti `5433`
+
+- Kui ühendus ei tööta:
+- veendu, et Docker containerid töötavad:
+  ```bash
+  docker ps
+  ```
+- kontrolli, et `lasteaiakohad_superset` on olekus `(healthy)`
+- vajadusel tee:
+  ```bash
+  docker compose restart superset
+  ```
+---
+- Mõnel juhul võib olla vajalik PostgreSQL driveri lubamine Supersetis (see on projektis juba seadistatud Dockerfile kaudu)
 
 ## PostgreSQL tabelid
 
