@@ -1,13 +1,78 @@
-# Lühiraporti mustand
+# Projekti raport
 
-Projekti eesmärk oli luua andmetöötluse ja visualiseerimise lahendus, mis aitab hinnata Rakvere valla sündivuse, rände ja rahvastiku muutuste mõju lasteaia kohtade vajadusele lähiaastatel. Uurimisküsimus keskendus sellele, kuidas on muutunud sündivus ja ränne ning kas olemasolevad lasteaiakohad võivad prognoosiperioodil olla piisavad.
+## Projekti eesmärk
 
-Andmeallikana kasutati Statistikaameti API-t. Pipeline loeb andmeid mitmest tabelist: rahvastik soo, vanuse ja elukoha järgi, sündide arv, surmade arv, sündimuse vanuskordajad ning rände saldo. Valitud piirkond on Rakvere vald. Andmete kasutamine API kaudu muudab protsessi korratavaks, sest sama skripti saab uuesti käivitada ka siis, kui Statistikaamet avaldab uuemaid andmeid.
+Projekti eesmärk oli luua korratav andmetöötluse ja visualiseerimise töövoog, mis võimaldab hinnata Rakvere valla sündivuse, rände ja rahvastikumuutuste võimalikku mõju lasteaiakohtade vajadusele lähiaastatel. Projekti keskmes oli tervikliku ETL-pipeline loomine, mis loeb andmed automaatselt Statistikaameti API-st, töötleb need analüüsitavaks kujuks, salvestab PostgreSQL andmebaasi ning võimaldab tulemusi visualiseerida Apache Supersetis. Projekti uurimisküsimus keskendub sellele, kuidas sündivuse ja rände muutused võivad mõjutada lasteaiakohtade vajadust tulevikus.
 
-ETL-protsess jaguneb kolmeks osaks. Extract-etapis tehakse päringud Statistikaameti API-sse ning loetakse vajalikud andmed Pythonisse. Transform-etapis puhastatakse veerunimed, teisendatakse aastate ja vanuserühmade põhised tabelid pikale või koondatud kujule, arvutatakse sündide ja surmade ajalooline aegrida, rändesaldo ning rahvastiku prognoos. Prognoosis kasutatakse mitut sündimuse ja rände stsenaariumi, et tulemused ei sõltuks ainult ühest eeldusest. Lisaks arvutatakse lasteaiaealiste laste hinnanguline arv ja vajalik kohtade arv. Load-etapis salvestatakse tulemused CSV-failidena ning laaditakse PostgreSQL andmebaasi tabelitesse.
+---
 
-Visualiseerimiseks kasutatakse Apache Superseti. Superset võimaldab PostgreSQL andmebaasiga ühenduda ja luua interaktiivseid graafikuid. Projekti jaoks sobivad peamised vaated on sündide ja surmade trend, rändesaldo, rahvaarvu prognoos ning lasteaiakohtade vajadus aastatel 2026–2030. Kõige olulisem visualiseering on lasteaiakohtade vajaduse joongraafik, kus prognoositud vajadust võrreldakse olemasoleva kohtade arvuga. See aitab muuta analüüsi praktiliseks otsustustoeks.
+## Andmeallikas
 
-Projekti andmehalduse poolelt on oluline, et kood, konfiguratsioonifailid ja dokumentatsioon paiknevad ühises Git-repositooriumis. README kirjeldab projekti eesmärki, andmeallikaid, arhitektuuri, käivitamise samme ja Superseti ühenduse loomist. Docker Compose abil käivitatakse PostgreSQL ja Superset ühtses lokaalses keskkonnas, mis lihtsustab projekti korduskäivitamist teises arvutis.
+Andmeallikana kasutati Statistikaameti API-t. Kasutatud tabelid sisaldasid rahvastikuandmeid soo, vanuse ja elukoha järgi, sündide ja surmade arvu, sündimuse vanuskordajaid ning rändesaldot. API kasutamine võimaldas luua korratava töövoo, kus sama pipeline’i saab uuemate andmete avaldamisel uuesti käivitada ilma käsitsi andmeid kogumata.
 
-Peamised väljakutsed olid Statistikaameti API tabelite erinev struktuur, vanuserühmade teisendamine ja prognoosimudeli eelduste sõnastamine. Need lahendati abifunktsioonidega, mis otsivad metaandmetest õiged muutujad, puhastavad veerunimed ja teisendavad tabelid ühtsesse kujusse. Projekti piirang on see, et prognoos põhineb lihtsustatud eeldustel ega arvesta kõiki kohalikke tegureid, näiteks era- ja munitsipaallasteaedade erinevusi. Sellest hoolimata annab lahendus hea näite andmeinseneeria töövoost alates API-päringust kuni andmebaasi ja visualiseerimiseni.
+---
+
+## ETL protsess
+
+ETL-protsess jagunes extract-, transform- ja load-etappideks. Töövoog oli üles ehitatud nii, et andmete allalaadimine, teisendamine ja andmebaasi laadimine olid eraldi sammudena kontrollitavad.
+
+### Extract
+
+Extract-etapis tehti Pythoni abil päringud Statistikaameti API-sse ning vajalikud andmed (rahvastik, sünnid, surmad, sündimuse vanuskordaja ja rändesaldo) laeti töötluskeskkonda. Päringud piirati Rakvere valla andmetega ning API vastused teisendati pandas DataFrame objektideks. Edasiseks töötluseks kasutati ka metaandmeid, mis aitasid leida õiged muutujate ja väärtuste koodid.
+
+### Transform
+
+Transform-etapis puhastati Pythoni ETL-skriptis API-st saadud tabelid, korrastati veerunimed ning viidi erineva struktuuriga andmed ühtsesse aastate ja vanuserühmade põhisesse formaati. Seejärel ühendati eri andmetabelid ning arvutati aegread, rändesaldo, loomulik iive ja rahvastikuprognoos. Väljundina salvestati CSV-tabelid ja graafikud kausta `Outputs/`.
+
+Prognoosis kasutati erinevaid sündivuse ja rände stsenaariume, vältimaks tulemuste sõltumist ühest eeldusest. Rahvastikuprognoosis arvestati vanuserühmade liikumist järgmisesse aastasse, sündide ja surmade mõju ning võimalikku rändesaldot.
+
+Lasteaiakohtade vajaduse prognoosimiseks hinnati 1–6-aastaste laste arvu ja rakendati vanusepõhiseid lasteaias osalemise määrasid. Selle põhjal arvutati, kas olemasolevatest lasteaiakohtadest piisab või võib tulevikus tekkida vajadus kohtade arvu muuta. Transform-etapi lõpus salvestati prognoosid, koondtabelid ja visualiseerimiseks vajalikud andmed CSV-failidena.
+
+### Load
+
+Load-etapis laaditi genereeritud CSV-failid PostgreSQL andmebaasi skriptiga `load_to_postgres.py`, mis luges väljundfailid, puhastas vajadusel veerunimed, lõi andmebaasitabelid ja kirjutas andmed PostgreSQL-i. Iga CSV-fail vastas kindlale andmebaasitabelile. Andmete laadimisel kasutati SQLAlchemy teeki ja pandas `to_sql()` funktsiooni.
+
+Projektis loodud ETL-pipeline automatiseerib andmetöötluse Statistikaameti API-st andmete lugemisest kuni PostgreSQL andmebaasini. PostgreSQL toimib keskse andmelaona, mille andmeid kasutatakse hiljem Apache Superseti visualiseeringutes.
+
+---
+
+## Visualiseerimine
+
+Visualiseerimiseks kasutati Apache Superseti, mis ühendati PostgreSQL andmebaasiga. See võimaldas visualiseeringud siduda otse andmebaasitabelitega, mistõttu sai ETL-töövoo tulemusena loodud andmeid dashboardil kasutada ilma graafikuid käsitsi ümber koostamata.
+
+Dashboard sisaldas:
+
+- rahvaarvu prognoosi,
+- sündide ja surmade trende,
+- rändesaldot,
+- rahvastikupüramiidi,
+- lasteaiakohtade vajaduse prognoosi.
+
+Visualiseeringute eesmärk oli muuta tulemused lihtsamini tõlgendatavaks ning võimaldada stsenaariumite võrdlemist.
+
+Analüüsi tulemused näitasid, et enamikus stsenaariumites rahvaarv väheneb ning loomulik iive püsib negatiivne. Prognoosi põhjal väheneb järk-järgult ka lasteaiakohtade vajadus. Oluline tulemus oli, et aastaks 2029 võrdsustub hinnanguline laste arv olemasolevate lasteaiakohtade arvuga ning järgnevatel aastatel võib vajadus olemasolevate kohtade arvust väiksemaks muutuda.
+
+Projektis kasutati versioonihalduseks Git-repositooriumi, kus paiknesid kood, konfiguratsioonifailid ja dokumentatsioon. Töökeskkonna loomiseks kasutati Docker Compose’i, mille abil käivitati PostgreSQL ja Superset ühtses lokaalses keskkonnas. README-fail kirjeldas projekti arhitektuuri, andmeallikaid ning süsteemi käivitamise samme. Projekti oli võimalik käivitada nii VS Code devcontaineris kui ka otse host-arvutis terminalist.
+
+---
+
+## Väljakutsed
+
+Peamisteks väljakutseteks osutusid API tabelite erinevad struktuurid, vanuserühmade teisendamine ning arenduskeskkondade erinev käitumine macOS- ja Windows-süsteemides. Projekti käivitamist mõjutasid ka Pythoni versioonide erinevus: uuema Pythoni versiooniga töötas pipeline mõnes keskkonnas probleemideta, kuid teistes tekkisid sõltuvuste ja lokaalse seadistusega seotud käivitusprobleemid. Selle riski vähendamiseks kasutati `requirements.txt` faili ning README-s kirjeldati täpsemalt projekti käivitamise samme.
+
+Mõnes Windowsi keskkonnas ei olnud Docker devcontaineri sees otse kättesaadav, mistõttu tuli Docker Compose käske käivitada host-süsteemi terminalist. Probleemi leevendamiseks muudeti andmebaasi ühendus paindlikumaks keskkonnamuutuja `DB_URL` abil. Superseti ja PostgreSQL ühendamisel tekkis probleem, kuna Superseti konteineris puudus PostgreSQL draiver `psycopg2`, mis lahendati Dockerfile’i täiendamisega.
+
+Suure hulga järjestikuste päringute tõttu katkestas Statistikaamet API vahel ajutiselt ühenduse. Selle vähendamiseks lisati päringute vahele lühikesed viivitused, mis muutsid andmete laadimise stabiilsemaks ja vähendasid API ülekoormamise riski.
+
+Koostöö käigus tekkis GitHubis harude ühendamisel konflikt, sest eri rühmaliikmed olid muutnud samu faile. Konflikti lahendamiseks tuli võrrelda erinevaid lahendusi, otsustada, millised muudatused alles jätta ja ühendada töö toimivaks tervikuks. See andis praktilise kogemuse pull requestide, harude ühendamise ja versioonihalduse töövoo mõistmiseks.
+
+Nendest probleemidest õppisime, et ETL-töövoo loomisel ei piisa ainult andmete töötlemise loogika kirjutamisest. Sama oluline on tagada, et töövoog käivituks erinevates arenduskeskkondades, vajalikud sõltuvused oleksid kirjeldatud ning andmebaasi ja visualiseerimisvahendi ühendused oleksid paindlikult seadistatavad.
+
+---
+
+## Teostajad
+
+- Liis Lille
+- Kata Maria Metsar
+- Miina Voltri
+- Jaak Ilves
