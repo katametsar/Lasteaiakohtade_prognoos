@@ -1,6 +1,4 @@
 # Projekti raport
----
-
 ## Projekti eesmärk
 
 Projekti eesmärk oli luua korratav andmetöötluse ja visualiseerimise töövoog, mis võimaldab hinnata Rakvere valla sündivuse, rände ja rahvastikumuutuste võimalikku mõju lasteaiakohtade vajadusele lähiaastatel. Projekti keskmes oli tervikliku ETL-pipeline loomine, mis loeb andmed automaatselt Statistikaameti API-st, töötleb need analüüsitavaks kujuks, salvestab PostgreSQL andmebaasi ning võimaldab tulemusi visualiseerida Apache Supersetis. Projekti uurimisküsimus keskendub sellele, kuidas sündivuse ja rände muutused võivad mõjutada lasteaiakohtade vajadust tulevikus.
